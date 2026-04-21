@@ -1,0 +1,41 @@
+{
+  "patientInfo": { "age": 49, "gender": "female" },
+  "bp_stage": "prehypertension_130_139_80_89",
+  "special": {
+    "diabetes": false,
+    "familialHypercholesterolemia": false
+  },
+  "riskFactors": {
+    "ageOver65": false,
+    "male": false,
+    "heartRateOver80": false,
+    "overweight": false,
+    "diabetes": false,
+    "highLDLOrTriglyceride": false,
+    "familialHypercholesterolemia": false,
+    "familyHistoryOfHypertension": false,
+    "earlyMenopause": false,
+    "smoking": false,
+    "environmentalSocioeconomicFactors": false,
+    "menopause": false,
+    "sedentaryLifestyle": false
+  },
+  "hmod": {
+    "leftVentricularHypertrophy": false,
+    "brainDamage": false,
+    "heartDamage": false,
+    "kidneyDamage": false,
+    "vascularDamage": false,
+    "ckdStage3": true,
+    "pulsePressureOver60": false
+  },
+  "cardiovascularDisease": {
+    "coronaryArteryDisease": false,
+    "heartFailure": false,
+    "stroke": false,
+    "peripheralVascularDisease": false,
+    "atrialFibrillation": false,
+    "ckdStage4": false,
+    "ckdStage5": false
+  }
+}

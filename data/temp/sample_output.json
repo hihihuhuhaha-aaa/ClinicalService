@@ -1,0 +1,173 @@
+{
+  "patient_id": "home_case_001",
+  "patient_count": 1,
+  "phenotypes": [
+    "unknown"
+  ],
+  "tha_types": [
+    "hypertension"
+  ],
+  "tha_stages": [
+    "unknown"
+  ],
+  "classification": {
+    "home_source_used": {
+      "source_used": "home",
+      "source_value_used": "137.5 / 87.83333333333333",
+      "confidence": "medium",
+      "quality_level": "high",
+      "flags": [
+        "borderline"
+      ]
+    },
+    "clinic_source_used": {
+        "bp_stage": "unknown",
+        "stage_confidence": "low",
+        "stage_quality_level": "low",
+        "stage_flags": [
+        "missing_clinic"
+      ]
+    },
+    "abpm_24h_source_used": {
+        "phenotype": "unknown",
+        "phenotype_source": "home",
+        "phenotype_confidence": "low",
+        "phenotype_quality_level": "high",
+        "phenotype_flags": [
+        "missing_clinic"
+        ]
+    }
+  },
+  "explaination": "",
+  "recommendation":"",
+  "confidence":"medium",
+  "source_used":"",
+  "detail": [
+    {
+      "environments": {
+        "clinic": {
+          "measurement": {
+            "bp_values": {
+              "sys": null,
+              "dia": null,
+              "available": false,
+              "status": "unknown"
+            },
+            "quality_clinic_minimal_inputs": {
+              "clinic_readings_count": 0,
+              "clinic_missing": true,
+              "clinic_rest_minutes": null
+            }
+          },
+          "quality": {
+            "score": 0.3,
+            "level": "low",
+            "flags": [
+              "clinic_quality_low"
+            ]
+          }
+        },
+        "home": {
+          "measurement": {
+            "bp_values": {
+              "sys": 137.5,
+              "dia": 87.83333333333333,
+              "available": true,
+              "status": "hypertension"
+            },
+            "temporal_coverage": {
+              "num_days": 3,
+              "days_with_morning": 3,
+              "days_with_evening": 3
+            },
+            "within_day_pattern": {
+              "has_morning": true,
+              "has_evening": true,
+              "days_with_both_sessions": 3,
+              "pattern": "normal"
+            },
+            "repeated_measurement_per_session": {
+              "pairs_per_session": 1.0,
+              "avg_readings_per_session": 1.0,
+              "pct_sessions_with_pairs": 0.0
+            },
+            "device_quality": {
+              "device_validated": true,
+              "device_type": "upper_arm"
+            },
+            "measurement_condition": {
+              "position": "sitting",
+              "rested_minutes": 5.0
+            },
+            "completeness": {
+              "all_readings_have_sys_dia_timestamp": true,
+              "missing_timestamp_only": false,
+              "missing_some_sys_or_dia": false,
+              "many_unusable_readings": false
+            }
+          },
+          "quality": {
+            "score": 0.835,
+            "level": "high",
+            "flags": [
+              "temporal_coverage_medium",
+              "repeated_measurement_per_session_medium"
+            ],
+            "usable": true
+          }
+        },
+        "abpm_24h": {
+          "measurement": {
+            "bp_values": {
+              "sys": null,
+              "dia": null,
+              "available": false,
+              "status": "unknown"
+            },
+            "duration": {
+              "duration_hours": 0.0
+            },
+            "valid_reading_ratio": {
+              "valid_readings": 0.0,
+              "expected_readings": 1,
+              "ratio": 0.0
+            },
+            "day_night_coverage": {
+              "has_day_data": false,
+              "has_night_data": false
+            },
+            "sampling_frequency": {
+              "day_interval_minutes": null,
+              "night_interval_minutes": null,
+              "minor_deviation_from_target": false,
+              "major_deviation_from_target": false,
+              "interval_unknown": true
+            },
+            "completeness": {
+              "all_readings_have_sys_dia_timestamp_period": false,
+              "missing_period_tag_only": false,
+              "missing_some_sys_or_dia_or_timestamp": false,
+              "many_unusable_readings": false
+            },
+            "activity_log": {
+              "activity_log": null
+            }
+          },
+          "quality": {
+            "score": 0.095,
+            "level": "low",
+            "flags": [
+              "duration_low",
+              "valid_reading_ratio_low",
+              "day_night_coverage_low",
+              "sampling_frequency_low",
+              "completeness_unmatched",
+              "activity_log_medium"
+            ],
+            "usable": false
+          }
+        }
+      }
+    }
+  ]
+}

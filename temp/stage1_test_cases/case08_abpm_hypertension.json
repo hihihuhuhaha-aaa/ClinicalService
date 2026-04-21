@@ -1,0 +1,38 @@
+[
+  {
+    "patient_id": "stage1_case08",
+    "source": "ABPM",
+    "day_period": "day",
+    "datetime": "2026-04-11T08:00:00",
+    "systolic": 136,
+    "diastolic": 86,
+    "activity_log": true
+  },
+  {
+    "patient_id": "stage1_case08",
+    "source": "ABPM",
+    "day_period": "day",
+    "datetime": "2026-04-11T08:30:00",
+    "systolic": 135,
+    "diastolic": 85,
+    "activity_log": true
+  },
+  {
+    "patient_id": "stage1_case08",
+    "source": "ABPM",
+    "day_period": "night",
+    "datetime": "2026-04-11T23:00:00",
+    "systolic": 128,
+    "diastolic": 78,
+    "activity_log": true
+  },
+  {
+    "patient_id": "stage1_case08",
+    "source": "ABPM",
+    "day_period": "night",
+    "datetime": "2026-04-12T01:00:00",
+    "systolic": 127,
+    "diastolic": 77,
+    "activity_log": true
+  }
+]

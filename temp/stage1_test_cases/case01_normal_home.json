@@ -1,0 +1,50 @@
+[
+  {
+    "patient_id": "stage1_case01",
+    "source": "HBPM",
+    "day_period": "morning",
+    "datetime": "2026-04-01T07:00:00",
+    "systolic": 116,
+    "diastolic": 72,
+    "device_type": "upper_arm",
+    "device_validated": true,
+    "position": "sitting",
+    "rested_minutes": 5
+  },
+  {
+    "patient_id": "stage1_case01",
+    "source": "HBPM",
+    "day_period": "evening",
+    "datetime": "2026-04-01T19:00:00",
+    "systolic": 118,
+    "diastolic": 74,
+    "device_type": "upper_arm",
+    "device_validated": true,
+    "position": "sitting",
+    "rested_minutes": 5
+  },
+  {
+    "patient_id": "stage1_case01",
+    "source": "HBPM",
+    "day_period": "morning",
+    "datetime": "2026-04-02T07:00:00",
+    "systolic": 117,
+    "diastolic": 73,
+    "device_type": "upper_arm",
+    "device_validated": true,
+    "position": "sitting",
+    "rested_minutes": 5
+  },
+  {
+    "patient_id": "stage1_case01",
+    "source": "HBPM",
+    "day_period": "evening",
+    "datetime": "2026-04-02T19:00:00",
+    "systolic": 119,
+    "diastolic": 75,
+    "device_type": "upper_arm",
+    "device_validated": true,
+    "position": "sitting",
+    "rested_minutes": 5
+  }
+]

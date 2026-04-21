@@ -1,0 +1,42 @@
+[
+  {
+    "patient_id": "stage1_case07",
+    "source": "OBPM",
+    "day_period": "day",
+    "datetime": "2026-04-10T09:45:00",
+    "systolic": 132,
+    "diastolic": 82,
+    "rested_minutes": 6
+  },
+  {
+    "patient_id": "stage1_case07",
+    "source": "OBPM",
+    "day_period": "day",
+    "datetime": "2026-04-10T09:50:00",
+    "systolic": 130,
+    "diastolic": 80,
+    "rested_minutes": 6
+  },
+  {
+    "patient_id": "stage1_case07",
+    "source": "HBPM",
+    "day_period": "morning",
+    "datetime": "2026-04-09T06:55:00",
+    "systolic": 138,
+    "diastolic": 89,
+    "device_validated": true,
+    "position": "sitting",
+    "rested_minutes": 5
+  },
+  {
+    "patient_id": "stage1_case07",
+    "source": "HBPM",
+    "day_period": "evening",
+    "datetime": "2026-04-09T18:55:00",
+    "systolic": 139,
+    "diastolic": 88,
+    "device_validated": true,
+    "position": "sitting",
+    "rested_minutes": 5
+  }
+]

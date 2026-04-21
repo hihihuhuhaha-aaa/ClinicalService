@@ -1,0 +1,41 @@
+{
+  "patientInfo": { "age": 52, "gender": "male" },
+  "bp_stage": "stage2",
+  "special": {
+    "diabetes": false,
+    "familialHypercholesterolemia": true
+  },
+  "riskFactors": {
+    "ageOver65": false,
+    "male": true,
+    "heartRateOver80": false,
+    "overweight": false,
+    "diabetes": false,
+    "highLDLOrTriglyceride": false,
+    "familialHypercholesterolemia": true,
+    "familyHistoryOfHypertension": false,
+    "earlyMenopause": false,
+    "smoking": false,
+    "environmentalSocioeconomicFactors": false,
+    "menopause": false,
+    "sedentaryLifestyle": false
+  },
+  "hmod": {
+    "leftVentricularHypertrophy": false,
+    "brainDamage": false,
+    "heartDamage": false,
+    "kidneyDamage": false,
+    "vascularDamage": false,
+    "ckdStage3": false,
+    "pulsePressureOver60": false
+  },
+  "cardiovascularDisease": {
+    "coronaryArteryDisease": false,
+    "heartFailure": false,
+    "stroke": false,
+    "peripheralVascularDisease": false,
+    "atrialFibrillation": false,
+    "ckdStage4": false,
+    "ckdStage5": false
+  }
+}

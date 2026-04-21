@@ -1,0 +1,668 @@
+version: "1.0"
+name: "BP_Interpretation_D1"
+language: "vi"
+description: >
+  Bộ rule cho Đ1: (1) phân loại huyết áp không tăng / tiền THA / THA,
+  (2) phân độ THA (stage 1 / stage 2),
+  (3) xác định kiểu hình (masked / white-coat),
+  kèm quality scoring cho HATN và HALĐ.
+
+# ============================================================
+# COMMON RULES
+# ============================================================
+common_rules:
+  source_priority:
+    - abpm_24h
+    - home
+    - clinic
+
+  # ----------------------------------------------------------
+  # SOURCE-SPECIFIC THRESHOLDS
+  # ----------------------------------------------------------
+  thresholds:
+    clinic:
+      description: "Ngưỡng tham chiếu cho huyết áp đo tại phòng khám (HAPK)."
+      normal:
+        sys_lt: 120
+        dia_lt: 70
+      elevated:
+        sys_range: [120, 139]
+        dia_range: [70, 89]
+      hypertension:
+        sys_ge: 140
+        dia_ge: 90
+
+      stage:
+        stage1:
+          sys_range: [140, 159]
+          dia_range: [90, 99]
+        stage2:
+          sys_ge: 160
+          dia_ge: 100
+
+    home:
+      description: "Ngưỡng tham chiếu cho huyết áp đo tại nhà (HATN)."
+      normal:
+        sys_lt: 120
+        dia_lt: 70
+      elevated:
+        sys_range: [120, 134]
+        dia_range: [70, 84]
+      hypertension:
+        sys_ge: 135
+        dia_ge: 85
+
+    abpm_24h:
+      description: "Ngưỡng tham chiếu cho huyết áp lưu động 24 giờ (HALĐ/ABPM 24h)."
+      normal:
+        sys_lt: 115
+        dia_lt: 65
+      elevated:
+        sys_range: [115, 129]
+        dia_range: [65, 79]
+      hypertension:
+        sys_ge: 130
+        dia_ge: 80
+
+  # ----------------------------------------------------------
+  # QUALITY: HOME BLOOD PRESSURE (HATN)
+  # ----------------------------------------------------------
+  quality_home:
+    description: >
+      Quality score cho HATN. Dùng để đánh giá độ tin cậy của bộ đo tại nhà,
+      áp dụng cho bước 1 (nguồn ưu tiên), bước 2/3 (confidence aware),
+      và để flag dữ liệu chưa đạt chuẩn.
+    input_requirements:
+      reading_fields_required:
+        - sys
+        - dia
+        - timestamp
+      optional_fields:
+        - context
+        - position
+        - rested_minutes
+        - device_type
+        - device_validated
+      protocol_recommendation:
+        morning_after_waking: true
+        evening_before_sleep: true
+        measurements_per_session: 2
+        sessions_per_day: 2
+        days_per_week_target: 7
+        minimum_days_usable: 2
+        preferred_days_usable: 3
+
+    hard_rules: 
+      temporal_coverage:
+        - if: "num_days >= 7 AND days_with_morning >= 5 AND days_with_evening >= 5" 
+          score: 1.0
+          level: "high"
+        - if: "num_days >= 3 AND days_with_morning >= 2 AND days_with_evening >= 2"
+          score: 0.7
+          level: "medium"
+        - if: "num_days == 2"
+          score: 0.4
+          level: "low"
+        - if: "num_days == 1"
+          score: 0.2
+          level: "low"
+        - if: "num_days <= 0"
+          score: 0.0
+          level: "low"
+
+      within_day_pattern:
+        - if: "has_morning == true AND has_evening == true AND days_with_both_sessions >= 2"
+          score: 1.0
+          level: "high"
+        - if: "has_morning == true OR has_evening == true"
+          score: 0.6
+          level: "medium"
+        - if: "pattern == random_only"
+          score: 0.3
+          level: "low"
+        - if: "no_time_pattern"
+          score: 0.0
+          level: "low"
+
+      repeated_measurement_per_session:
+        - if: "pairs_per_session >= 2"
+          score: 1.0
+          level: "high"
+        - if: "pairs_per_session == 1"
+          score: 0.5
+          level: "medium"
+        - if: "pairs_per_session == 0"
+          score: 0.0
+          level: "low"
+
+      device_quality:
+        - if: "device_validated == true AND device_type == 'upper_arm'"
+          score: 1.0
+          level: "high"
+        - if: "device_validated == true AND device_type == 'wrist'"
+          score: 0.6
+          level: "medium"
+        - if: "device_validated == false"
+          score: 0.3
+          level: "low"
+        - if: "device_type == 'unknown' OR device_type is null"
+          score: 0.2
+          level: "low"
+
+      measurement_condition:
+        - if: "rested_minutes >= 5 AND position == 'sitting'"
+          score: 1.0
+          level: "high"
+        - if: "position == 'sitting' AND rested_minutes is null"
+          score: 0.7
+          level: "medium"
+        - if: "position == 'unknown' OR position is null"
+          score: 0.4
+          level: "low"
+        - if: "position not in ['sitting', 'unknown']"
+          score: 0.2
+          level: "low"
+
+      completeness:
+        - if: "all_readings_have_sys_dia_timestamp == true"
+          score: 1.0
+          level: "high"
+        - if: "missing_timestamp_only == true"
+          score: 0.7
+          level: "medium"
+        - if: "missing_some_sys_or_dia == true"
+          score: 0.4
+          level: "low"
+        - if: "many_unusable_readings == true"
+          score: 0.0
+          level: "low"
+
+    overall_score_formula:
+      weights:
+        temporal_coverage: 0.30
+        within_day_pattern: 0.20
+        repeated_measurement_per_session: 0.15
+        device_quality: 0.15
+        measurement_condition: 0.10
+        completeness: 0.10
+      formula: >
+        home_quality_score =
+          0.30 * temporal_coverage_score +
+          0.20 * within_day_pattern_score +
+          0.15 * repeated_measurement_per_session_score +
+          0.15 * device_quality_score +
+          0.10 * measurement_condition_score +
+          0.10 * completeness_score
+
+    score_to_level_mapping:
+      high: "score >= 0.80"
+      medium: "0.60 <= score < 0.80"
+      low: "score < 0.60"
+
+    output:
+      fields:
+        - home_quality_score
+        - home_quality_level
+        - home_quality_flags
+        - home_quality_usable
+
+      home_quality_flags_examples:
+        - insufficient_days
+        - missing_morning_measurements
+        - missing_evening_measurements
+        - random_timing
+        - unvalidated_device
+        - incorrect_posture
+        - incomplete_record
+
+  # ----------------------------------------------------------
+  # QUALITY: ABPM / HALĐ
+  # ----------------------------------------------------------
+  quality_abpm_24h:
+    description: >
+      Quality score cho HALĐ/ABPM 24h. Dùng để kiểm tra độ phủ thời gian,
+      tỷ lệ số đo hợp lệ, đủ ngày/đêm, và mức tuân thủ sampling interval.
+    input_requirements:
+      reading_fields_required:
+        - sys
+        - dia
+        - timestamp
+        - period
+      optional_fields:
+        - activity_log
+        - sleep_log
+        - medication_log
+      protocol_recommendation:
+        duration_target_hours: 24
+        day_interval_minutes_target: [15, 30]
+        night_interval_minutes_target: [30, 60]
+        minimum_valid_reading_ratio: 0.70
+        preferred_valid_reading_ratio: 0.80
+
+    hard_rules:
+      duration:
+        - if: "duration_hours == 24"
+          score: 1.0
+          level: "high"
+        - if: "duration_hours >= 20 AND duration_hours < 24"
+          score: 0.7
+          level: "medium"
+        - if: "duration_hours >= 12 AND duration_hours < 20"
+          score: 0.4
+          level: "low"
+        - if: "duration_hours < 12"
+          score: 0.0
+          level: "low"
+
+      valid_reading_ratio:
+        - if: "valid_readings / expected_readings >= 0.80"
+          score: 1.0
+          level: "high"
+        - if: "valid_readings / expected_readings >= 0.70"
+          score: 0.8
+          level: "high"
+        - if: "valid_readings / expected_readings >= 0.50"
+          score: 0.5
+          level: "medium"
+        - if: "valid_readings / expected_readings < 0.50"
+          score: 0.0
+          level: "low"
+
+      day_night_coverage:
+        - if: "has_day_data == true AND has_night_data == true"
+          score: 1.0
+          level: "high"
+        - if: "has_day_data == true OR has_night_data == true"
+          score: 0.5
+          level: "medium"
+        - if: "has_day_data == false AND has_night_data == false"
+          score: 0.0
+          level: "low"
+
+      sampling_frequency:
+        - if: "day_interval_minutes >= 15 AND day_interval_minutes <= 30 AND night_interval_minutes >= 30 AND night_interval_minutes <= 60"
+          score: 1.0
+          level: "high"
+        - if: "minor_deviation_from_target == true"
+          score: 0.7
+          level: "medium"
+        - if: "major_deviation_from_target == true"
+          score: 0.3
+          level: "low"
+        - if: "interval_unknown == true"
+          score: 0.4
+          level: "low"
+
+      completeness:
+        - if: "all_readings_have_sys_dia_timestamp_period == true"
+          score: 1.0
+          level: "high"
+        - if: "missing_period_tag_only == true"
+          score: 0.7
+          level: "medium"
+        - if: "missing_some_sys_or_dia_or_timestamp == true"
+          score: 0.4
+          level: "low"
+        - if: "many_unusable_readings == true"
+          score: 0.0
+          level: "low"
+
+      activity_log:
+        - if: "activity_log == true"
+          score: 1.0
+          level: "high"
+        - if: "activity_log == false OR activity_log is null"
+          score: 0.7
+          level: "medium"
+
+    overall_score_formula:
+      weights:
+        duration: 0.25
+        valid_reading_ratio: 0.25
+        day_night_coverage: 0.20
+        sampling_frequency: 0.15
+        completeness: 0.10
+        activity_log: 0.05
+      formula: >
+        abpm_quality_score =
+          0.25 * duration_score +
+          0.25 * valid_reading_ratio_score +
+          0.20 * day_night_coverage_score +
+          0.15 * sampling_frequency_score +
+          0.10 * completeness_score +
+          0.05 * activity_log_score
+
+    score_to_level_mapping:
+      high: "score >= 0.80"
+      medium: "0.60 <= score < 0.80"
+      low: "score < 0.60"
+
+    output:
+      fields:
+        - abpm_quality_score
+        - abpm_quality_level
+        - abpm_quality_flags
+        - abpm_quality_usable
+
+      abpm_quality_flags_examples:
+        - short_duration
+        - insufficient_valid_readings
+        - missing_night_bp
+        - missing_day_bp
+        - invalid_sampling_interval
+        - incomplete_record
+        - no_activity_log
+
+  # ----------------------------------------------------------
+  # AUXILIARY CLINIC QUALITY (LIGHTWEIGHT)
+  # ----------------------------------------------------------
+  quality_clinic_minimal:
+    description: >
+      Chỉ dùng làm confidence proxy cho bước 2. Không phải quality model chi tiết
+      như HATN/HALĐ.
+    minimum_rules:
+      - if: "clinic_readings_count >= 2 AND clinic_rest_minutes >= 5"
+        level: "high"
+      - if: "clinic_readings_count >= 1"
+        level: "medium"
+      - if: "clinic_readings_count == 0 OR clinic_missing == true"
+        level: "low"
+
+# ============================================================
+# STEP 1: BP CATEGORY
+# ============================================================
+step1_bp_category:
+  name: "Phân loại huyết áp"
+  scope: "normal | elevated | hypertension"
+  definition: >
+    Phân loại huyết áp thành không tăng, tiền THA và THA dựa trên giá trị tuyệt đối
+    của nguồn đo được chọn theo ưu tiên 24h > home > clinic.
+
+  input:
+    required_fields:
+      - clinic_sys
+      - clinic_dia
+    optional_fields:
+      - home_sys
+      - home_dia
+      - abpm_24h_sys
+      - abpm_24h_dia
+      - home_quality_score
+      - home_quality_level
+      - abpm_quality_score
+      - abpm_quality_level
+    note: >
+      Nếu có nhiều nguồn, ưu tiên ABPM 24h trước, sau đó HATN, cuối cùng HAPK.
+      Nếu nguồn ưu tiên không khả dụng hoặc quality quá thấp, hạ xuống nguồn kế tiếp.
+
+  output:
+    fields:
+      - bp_category
+      - source_used
+      - source_value_used
+      - category_confidence
+      - category_quality_level
+      - category_flags
+
+  logic:
+    step_1_select_source:
+      rule: "abpm_24h > home > clinic"
+      selection_policy:
+        - if: "abpm_24h_available == true AND abpm_quality_level != 'low'"
+          selected_source: "abpm_24h"
+        - elif: "home_available == true AND home_quality_level != 'low'"
+          selected_source: "home"
+        - elif: "clinic_available == true"
+          selected_source: "clinic"
+        - else:
+          selected_source: "unknown"
+
+    step_2_apply_thresholds:
+      if_selected_source_abpm_24h:
+        normal: "abpm_sys < 115 AND abpm_dia < 65"
+        elevated: "115 <= abpm_sys <= 129 OR 65 <= abpm_dia <= 79"
+        hypertension: "abpm_sys >= 130 OR abpm_dia >= 80"
+
+      if_selected_source_home:
+        normal: "home_sys < 120 AND home_dia < 70"
+        elevated: "120 <= home_sys <= 134 OR 70 <= home_dia <= 84"
+        hypertension: "home_sys >= 135 OR home_dia >= 85"
+
+      if_selected_source_clinic:
+        normal: "clinic_sys < 120 AND clinic_dia < 70"
+        elevated: "120 <= clinic_sys <= 139 OR 70 <= clinic_dia <= 89"
+        hypertension: "clinic_sys >= 140 OR clinic_dia >= 90"
+
+    step_3_confidence_adjustment:
+      base_by_source_quality:
+        high: "high"
+        medium: "medium"
+        low: "low"
+      borderline_rule: >
+        Nếu giá trị nằm sát ngưỡng quyết định (chênh <= 5 mmHg với ngưỡng quan trọng),
+        confidence giảm 1 mức.
+      consistency_rule: >
+        Nếu có thêm nguồn phụ trợ nhưng không mâu thuẫn mạnh với nguồn chọn,
+        confidence có thể giữ nguyên; nếu mâu thuẫn mạnh, confidence giảm 1 mức.
+      final_mapping:
+        high: "đủ tin cậy"
+        medium: "tin cậy vừa"
+        low: "tin cậy thấp"
+
+    step_4_return_category:
+      output_category_order:
+        - hypertension
+        - elevated
+        - normal
+      note: >
+        Nếu sys và dia rơi vào hai nhóm khác nhau, ưu tiên nhóm nặng hơn.
+
+  edge_cases:
+    - case: "Chỉ có clinic"
+      behavior: "Dùng clinic threshold, confidence phụ thuộc clinic_quality_minimal."
+    - case: "Có ABPM nhưng quality low"
+      behavior: "Nếu còn home đạt chuẩn thì hạ xuống home; nếu không thì có thể vẫn dùng ABPM nhưng confidence thấp."
+    - case: "Có home nhưng quality low"
+      behavior: "Hạ xuống clinic nếu clinic có sẵn; nếu không thì vẫn output nhưng confidence thấp."
+    - case: "Thiếu toàn bộ nguồn"
+      behavior: "bp_category = unknown."
+    - case: "Giá trị sát ngưỡng"
+      behavior: "Giữ kết luận nhưng giảm confidence."
+    - case: "sys và dia lệch nhóm"
+      behavior: "Chọn nhóm nặng hơn."
+
+# ============================================================
+# STEP 2: BP STAGE (CLINIC ONLY)
+# ============================================================
+step2_bp_stage:
+  name: "Phân độ THA"
+  scope: "stage1 | stage2"
+  definition: >
+    Phân độ mức độ THA chỉ dựa trên HAPK (clinic), và chỉ thực hiện khi bước 1
+    đã xác định bệnh nhân thuộc nhóm hypertension.
+
+  input:
+    required_fields:
+      - bp_category
+      - clinic_sys
+      - clinic_dia
+    optional_fields:
+      - clinic_readings_count
+      - clinic_rest_minutes
+      - clinic_quality_level
+      - clinic_quality_score
+
+  output:
+    fields:
+      - bp_stage
+      - stage_source
+      - stage_confidence
+      - stage_quality_level
+      - stage_flags
+
+  logic:
+    step_1_check_htn:
+      rule: "Nếu bp_category != hypertension thì bp_stage = none"
+      return: "none"
+
+    step_2_check_unknown:
+      rule: "Nếu thiếu clinic_sys hoặc clinic_dia thì bp_stage = unknown"
+      return: "unknown"
+
+    step_3_apply_threshold:
+      stage2: "clinic_sys >= 160 OR clinic_dia >= 100"
+      stage1: "clinic_sys >= 140 OR clinic_dia >= 90"
+      note: >
+        Nếu cả hai cùng thỏa, chọn stage2. Nếu một trong hai thỏa, chọn nhóm nặng hơn.
+
+    step_4_quality_aware_adjustment:
+      base_quality_source: "clinic_quality_minimal"
+      confidence_mapping:
+        high: "high"
+        medium: "medium"
+        low: "low"
+      downgrade_rule: >
+        Nếu clinic_quality_level = low, hoặc giá trị sát ngưỡng quyết định (chênh <= 5 mmHg),
+        confidence giảm 1 mức.
+      if_ambiguous: >
+        Nếu clinic_sys/dia có khoảng dao động giữa nhiều lần đo và chưa ổn định,
+        confidence = low.
+      output_confidence_values:
+        - high
+        - medium
+        - low
+
+  edge_cases:
+    - case: "bp_category = normal or elevated"
+      behavior: "bp_stage = none."
+    - case: "clinic missing"
+      behavior: "bp_stage = unknown."
+    - case: "clinic high nhưng home/abpm bình thường (white-coat)"
+      behavior: "vẫn stage theo clinic; phenotype sẽ xử lý ở step 3."
+    - case: "clinic low quality"
+      behavior: "stage vẫn có thể xác định nhưng confidence thấp."
+    - case: "giá trị sát ngưỡng stage1/stage2"
+      behavior: "giảm confidence 1 mức."
+    - case: "sys và dia cho hai stage khác nhau"
+      behavior: "chọn stage nặng hơn."
+
+# ============================================================
+# STEP 3: PHENOTYPE (MASKED / WHITE-COAT)
+# ============================================================
+step3_phenotype:
+  name: "Xác định kiểu hình"
+  scope: "masked | white_coat | none | unknown"
+  definition: >
+    Xác định kiểu hình dựa trên sự không一致 giữa HAPK (clinic) và huyết áp ngoài
+    phòng khám (ưu tiên ABPM 24h, nếu không có thì HATN).
+
+  input:
+    required_fields:
+      - clinic_sys
+      - clinic_dia
+    optional_fields:
+      - home_sys
+      - home_dia
+      - abpm_24h_sys
+      - abpm_24h_dia
+      - home_quality_level
+      - abpm_quality_level
+
+  output:
+    fields:
+      - phenotype
+      - phenotype_source
+      - phenotype_confidence
+      - phenotype_quality_level
+      - phenotype_flags
+
+  logic:
+    step_1_define_high_by_source:
+      clinic_high: "clinic_sys >= 140 OR clinic_dia >= 90"
+      home_high: "home_sys >= 135 OR home_dia >= 85"
+      abpm_high: "abpm_24h_sys >= 130 OR abpm_24h_dia >= 80"
+
+    step_2_select_out_of_office_source:
+      priority:
+        - abpm_24h
+        - home
+      rules:
+        - if: "abpm_24h_available == true AND abpm_quality_level != 'low'"
+          out_source: "abpm_24h"
+          out_high: "abpm_high"
+        - elif: "home_available == true AND home_quality_level != 'low'"
+          out_source: "home"
+          out_high: "home_high"
+        - else:
+          out_source: "unknown"
+          out_high: "unknown"
+
+    step_3_compare_and_classify:
+      rules:
+        - if: "clinic_missing == true OR out_source == 'unknown'"
+          phenotype: "unknown"
+        - elif: "clinic_high == true AND out_high == false"
+          phenotype: "white_coat"
+        - elif: "clinic_high == false AND out_high == true"
+          phenotype: "masked"
+        - else:
+          phenotype: "none"
+
+      note: >
+        "none" bao gồm các trường hợp không rơi vào masked/white-coat,
+        ví dụ normal hoặc sustained theo logic phenotype thuần.
+
+    step_4_quality_aware_adjustment:
+      base_quality_source: "out_of_office_source_quality"
+      confidence_mapping:
+        high: "high"
+        medium: "medium"
+        low: "low"
+      downgrade_rule: >
+        Nếu out_of_office source quality thấp, hoặc clinic/out-of-office sát ngưỡng quyết định,
+        confidence giảm 1 mức.
+      conflict_rule: >
+        Nếu ABPM và Home cùng có nhưng mâu thuẫn nhau, ưu tiên ABPM;
+        nếu chất lượng hai nguồn đều thấp thì phenotype = unknown.
+      output_confidence_values:
+        - high
+        - medium
+        - low
+
+  edge_cases:
+    - case: "Không có clinic"
+      behavior: "phenotype = unknown."
+    - case: "Không có nguồn ngoài phòng khám"
+      behavior: "phenotype = unknown."
+    - case: "ABPM và home mâu thuẫn"
+      behavior: "ưu tiên ABPM; nếu ABPM low quality và home high quality, có thể hạ confidence."
+    - case: "clinic high và out-of-office high"
+      behavior: "phenotype = none (không phải masked/white-coat)."
+    - case: "clinic normal và out-of-office normal"
+      behavior: "phenotype = none."
+    - case: "giá trị sát ngưỡng"
+      behavior: "giảm confidence 1 mức."
+    - case: "dữ liệu ngoài phòng khám quality low"
+      behavior: "có thể trả unknown nếu không đủ tin cậy."
+
+# ============================================================
+# SHARED OUTPUT CONTRACT
+# ============================================================
+shared_output_contract:
+  recommended_final_output_fields:
+    - bp_category
+    - bp_stage
+    - phenotype
+    - source_used_category
+    - source_used_stage
+    - source_used_phenotype
+    - category_confidence
+    - stage_confidence
+    - phenotype_confidence
+    - home_quality_score
+    - home_quality_level
+    - abpm_quality_score
+    - abpm_quality_level
+    - category_flags
+    - stage_flags
+    - phenotype_flags
