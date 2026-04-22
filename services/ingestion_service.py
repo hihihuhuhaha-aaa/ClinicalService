@@ -1,6 +1,7 @@
 """Ingestion service — orchestrates the ingestion pipeline + persistence."""
 from __future__ import annotations
 
+from observability import aspan
 from models.ingestion import IngestResponse, InsertedRecords, ReviewResponse, SafetyInfo
 from repositories import IngestionRepository
 from services.ingestion import run_ingestion_pipeline
@@ -11,18 +12,31 @@ class IngestionService:
         self._repo = repo
 
     async def ingest(self, patient_id: str, message: str, llm) -> IngestResponse:
-        result = await run_ingestion_pipeline(message, llm)
+        async with aspan(
+            "ingestion.ingest",
+            as_type="chain",
+            input={"patient_id": patient_id, "message": message},
+            metadata={"patient_id": patient_id},
+        ) as root:
+            result = await run_ingestion_pipeline(message, llm)
 
-        severity = result.safety.severity
-        status = result.label.status
-        payload = result.curation.payload
+            severity = result.safety.severity
+            status = result.label.status
+            payload = result.curation.payload
 
-        inserted = await self._repo.insert_from_payload(
-            patient_id=patient_id,
-            payload=payload,
-            severity=severity.value,
-            status=status,
-        )
+            async with aspan(
+                "ingestion.persist",
+                input={"patient_id": patient_id, "payload": payload},
+            ) as s:
+                inserted = await self._repo.insert_from_payload(
+                    patient_id=patient_id,
+                    payload=payload,
+                    severity=severity.value,
+                    status=status,
+                )
+                s.update(output=inserted)
+
+            root.update(output=result.curation.payload)
 
         return IngestResponse(
             status=status,

@@ -34,5 +34,10 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     LLM_API_KEY: str = "dummy"
 
+    # Langfuse observability
+    LANGFUSE_PUBLIC_KEY: str = ""
+    LANGFUSE_SECRET_KEY: str = ""
+    LANGFUSE_BASE_URL: str = "https://cloud.langfuse.com"
+
 
 settings = Settings()

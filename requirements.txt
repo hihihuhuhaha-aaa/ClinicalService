@@ -8,3 +8,4 @@ uvicorn[standard]>=0.29
 asyncpg>=0.29
 httpx>=0.27
 starlette>=0.37
+langfuse>=4.5
