@@ -1,0 +1,9 @@
+rulebooks:
+  # Stage 1: BP measurement classification
+  stage1:
+    active: "d1"
+    versions:
+      d1:
+        file: "data/rules/bp_interpretation_d1.yaml"
+        description: "Phân loại huyết áp theo hướng dẫn Việt Nam (THA, tiền THA, bình thường)"
+        released: "2025-01-01"

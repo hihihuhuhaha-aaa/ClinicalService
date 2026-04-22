@@ -14,7 +14,7 @@ python - <<'PY'
 import json
 from pathlib import Path
 
-from services.symbolic.stage2_comprehensive_assessment.assessment import run_stage2_assessment
+from services.clinic_engine.stage2_comprehensive_assessment.assessment import run_stage2_assessment
 
 root = Path.cwd()
 case_dir = root / "temp" / "stage2_test_cases"

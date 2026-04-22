@@ -1,0 +1,22 @@
+app:
+  name: "Neural-Symbolic Clinical API"
+  version: "0.1.0"
+  debug: false
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+
+cors:
+  allow_origins: ["*"]
+  allow_credentials: true
+  allow_methods: ["*"]
+  allow_headers: ["*"]
+
+database:
+  url: "postgresql://admin:123456@localhost:5432/clinic_engine"
+
+
+logging:
+  format: "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+  datefmt: "%Y-%m-%dT%H:%M:%S"

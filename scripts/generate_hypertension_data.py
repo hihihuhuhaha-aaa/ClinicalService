@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from services.symbolic.dataset import generate_synthetic_hypertension_data
+from services.clinic_engine.stage1_measurement_classification.data.dataset import generate_synthetic_hypertension_data
 
 
 def main() -> None:

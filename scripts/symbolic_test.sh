@@ -57,7 +57,7 @@ from typing import Any
 
 import pandas as pd
 
-from services.symbolic import run_stage2_assessment, run_symbolic_pipeline
+from services.clinic_engine import run_stage2_assessment, run_symbolic_pipeline
 
 REQUIRED_FIELDS = [
     "patient_id",

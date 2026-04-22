@@ -1,0 +1,10 @@
+from __future__ import annotations
+
+from pydantic import BaseModel
+
+
+class HealthResponse(BaseModel):
+    status: str
+    version: str
+    db: str
+    llm_url: str
